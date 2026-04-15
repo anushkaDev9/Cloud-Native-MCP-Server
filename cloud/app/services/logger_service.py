@@ -4,21 +4,35 @@
 # Handles audit logging for tool requests and responses
 
 import logging
-import os
-from app.config import LOG_DIR, LOG_FILE
-
-os.makedirs(LOG_DIR, exist_ok=True)
+from datetime import datetime
 
 logging.basicConfig(
-    filename=LOG_FILE,
+    filename="mcp_logs.log",
     level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s"
+    format="%(message)s"
 )
 
+def log_event(user_id, role, tool_name, status, details=""):
+    log_data = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "user_id": user_id,
+        "role": role,
+        "tool": tool_name,
+        "status": status,
+        "details": details
+    }
 
-def log_event(message: str):
-    logging.info(message)
+    logging.info(log_data)
 
 
-def log_error(message: str):
-    logging.error(message)
+def log_error(user_id, role, tool_name, error):
+    log_data = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "user_id": user_id,
+        "role": role,
+        "tool": tool_name,
+        "status": "error",
+        "error": str(error)
+    }
+
+    logging.error(log_data)

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from app.auth import API_KEYS
 from app.models.schemas import (
     ToolInvokeRequest,
     ToolInvokeResponse,
@@ -7,11 +8,9 @@ from app.models.schemas import (
 )
 from app.services.tool_registry import get_all_tools
 from app.services.executor import execute_tool
+from app.tools.s3_tool import list_s3_buckets
 
 router = APIRouter()
-
-# Simple allowlist for demo
-ALLOWED_GITHUB_USERS = ["anushkaDev9"]
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -29,14 +28,17 @@ def list_tools():
 
 @router.post("/invoke-tool", response_model=ToolInvokeResponse)
 def invoke_tool(request: ToolInvokeRequest):
-    # If username is in allowlist, give developer role
-    if request.user_id in ALLOWED_GITHUB_USERS:
-        role = "developer"
-    else:
-        role = "viewer"
+    api_key = request.api_key
+
+    # Validate API key
+    if api_key not in API_KEYS:
+        raise HTTPException(status_code=401, detail="Invalid API Key")
+
+    # Get role from API key
+    role = API_KEYS[api_key]
 
     user = {
-        "user_id": request.user_id,
+        "user_id": api_key,
         "role": role
     }
 
@@ -46,3 +48,4 @@ def invoke_tool(request: ToolInvokeRequest):
         raise HTTPException(status_code=status_code, detail=response["result"])
 
     return response
+

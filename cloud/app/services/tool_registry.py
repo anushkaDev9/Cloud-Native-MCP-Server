@@ -9,6 +9,12 @@ TOOLS = [
         "allowed_roles": ["admin", "viewer", "devops"]
     },
     {
+        "tool_name": "s3_list_buckets",
+        "description": "Lists all S3 buckets",
+        "allowed_roles": ["admin", "user", "viewer", "developer"],
+        "required_params": []
+    },
+    {
         "tool_name": "ec2_start_instance",
         "description": "Starts an EC2 instance",
         "required_params": ["instance_id"],

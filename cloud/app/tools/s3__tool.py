@@ -18,3 +18,20 @@ def list_s3_files(bucket_name: str):
         "bucket_name": bucket_name,
         "files": files
     }
+
+def list_s3_buckets():
+    try:
+        s3 = boto3.client("s3")
+        response = s3.list_buckets()
+
+        buckets = [b["Name"] for b in response["Buckets"]]
+
+        return {
+            "message": "S3 buckets listed successfully",
+            "buckets": buckets
+        }
+
+    except Exception as e:
+        return {
+            "error": str(e)
+        }

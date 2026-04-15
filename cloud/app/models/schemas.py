@@ -5,7 +5,7 @@ from typing import Dict, Any, Optional
 
 
 class ToolInvokeRequest(BaseModel):
-    user_id: str
+    api_key: str
     tool_name: str
     parameters: Dict[str, Any]
 

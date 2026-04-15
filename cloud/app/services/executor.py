@@ -1,6 +1,6 @@
 from app.services.tool_registry import get_tool_by_name
 from app.services.logger_service import log_event, log_error
-from app.tools.s3_tool import list_s3_files
+from app.tools.s3_tool import list_s3_files, list_s3_buckets
 from app.tools.ec2_tool import start_ec2_instance
 from app.tools.github_tool import create_github_issue
 
@@ -9,7 +9,12 @@ def execute_tool(request, user):
     tool = get_tool_by_name(request.tool_name)
 
     if not tool:
-        log_error(f"user={user['user_id']} role={user['role']} tool={request.tool_name} status=not_found")
+        log_error(
+            user_id=user["user_id"],
+            role=user["role"],
+            tool_name=request.tool_name,
+            error="Tool not found"
+        )
         return {
             "status": "error",
             "tool_name": request.tool_name,
@@ -18,8 +23,10 @@ def execute_tool(request, user):
 
     if user["role"] not in tool["allowed_roles"]:
         log_error(
-            f"user={user['user_id']} role={user['role']} tool={request.tool_name} "
-            f"status=forbidden parameters={request.parameters}"
+            user_id=user["user_id"],
+            role=user["role"],
+            tool_name=request.tool_name,
+            error=f"Access denied. Params: {request.parameters}"
         )
         return {
             "status": "error",
@@ -34,8 +41,10 @@ def execute_tool(request, user):
 
     if missing_params:
         log_error(
-            f"user={user['user_id']} role={user['role']} tool={request.tool_name} "
-            f"status=bad_request missing_params={missing_params}"
+            user_id=user["user_id"],
+            role=user["role"],
+            tool_name=request.tool_name,
+            error=f"Missing params: {missing_params}"
         )
         return {
             "status": "error",
@@ -44,16 +53,24 @@ def execute_tool(request, user):
         }, 400
 
     try:
+        # 🔹 Start log
         log_event(
-            f"user={user['user_id']} role={user['role']} tool={request.tool_name} "
-            f"status=started parameters={request.parameters}"
+            user_id=user["user_id"],
+            role=user["role"],
+            tool_name=request.tool_name,
+            status="started",
+            details=str(request.parameters)
         )
 
         result = run_tool(request.tool_name, request.parameters)
 
+        # 🔹 Success log
         log_event(
-            f"user={user['user_id']} role={user['role']} tool={request.tool_name} "
-            f"status=success result={result}"
+            user_id=user["user_id"],
+            role=user["role"],
+            tool_name=request.tool_name,
+            status="success",
+            details=str(result)
         )
 
         return {
@@ -63,9 +80,12 @@ def execute_tool(request, user):
         }, 200
 
     except Exception as e:
+        # 🔹 Error log
         log_error(
-            f"user={user['user_id']} role={user['role']} tool={request.tool_name} "
-            f"status=failed error={str(e)}"
+            user_id=user["user_id"],
+            role=user["role"],
+            tool_name=request.tool_name,
+            error=str(e)
         )
         return {
             "status": "error",
@@ -77,6 +97,9 @@ def execute_tool(request, user):
 def run_tool(tool_name, params):
     if tool_name == "s3_list_files":
         return list_s3_files(params["bucket_name"])
+
+    elif tool_name == "s3_list_buckets":
+        return list_s3_buckets()
 
     elif tool_name == "ec2_start_instance":
         return start_ec2_instance(params["instance_id"])
