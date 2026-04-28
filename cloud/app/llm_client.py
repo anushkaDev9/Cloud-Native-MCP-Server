@@ -22,14 +22,17 @@ github_create_issue
 
 Repository:
 {repo_name}
+Based on the user request, generate:
+- A short and meaningful title
+- A clear and descriptive body
 
 Return ONLY valid JSON in this exact structure:
 {{
   "tool_name": "github_create_issue",
   "parameters": {{
     "repo": "{repo_name}",
-    "title": "short issue title",
-    "body": "clear issue description"
+    "title": "Generate a short issue title based on the user request",
+    "body": "Generate a clear and detailed issue description based on the user request"
   }}
 }}
 
